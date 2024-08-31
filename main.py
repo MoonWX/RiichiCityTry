@@ -2,9 +2,9 @@ from loguru import logger
 from sys import stdout
 from mitmproxy import http, ctx
 import json
-
+# You should not modify the following variables
 userInfo = {
-    "nickname": "This is an example please replace it with your own nickname",
+    "nickname": "Default",
     "userID": 123456789,
 }
 roleInfo = {
@@ -50,6 +50,20 @@ addons = [
     WebSocketAddon()
 ]
 def response(flow: http.HTTPFlow) -> None:
+    global userInfo, roleInfo
+    if "/users/tokenLogin" in flow.request.path:
+        if flow.response.content:
+            try:
+                logger.debug("Modifying response for /users/tokenLogin")
+                response_data = json.loads(flow.response.content)
+                logger.debug(f"Request data: {response_data}")
+                userInfo['userID'] = response_data['data']['user']['id']
+                userInfo['nickname'] = response_data['data']['user']['nickname']
+                logger.info(f"User {userInfo['nickname']} logged in")
+                logger.info(f"User ID: {userInfo['userID']}")
+            except json.JSONDecodeError:
+                pass
+
     # 如果 URL 的后半部分包含 /users/getSkinInfo
     if "/users/getSkinInfo" in flow.request.path:
         # 修改响应体
@@ -66,6 +80,12 @@ def response(flow: http.HTTPFlow) -> None:
     
     # 如果 URL 的后半部分包含 /users/updateRoleInfo
     elif "/users/updateRoleInfo" in flow.request.path:
+        request_data = json.loads(flow.request.content)
+        roleInfo['roleID'] = request_data['roleID']
+        logger.info(f"Role ID: {roleInfo['roleID']}")
+        roleInfo['skinID'] = request_data['skinID']
+        logger.info(f"Skin ID: {roleInfo['skinID']}")
+
         # 返回固定的 JSON 响应
         response_data = {
             "code": 0,
@@ -85,6 +105,8 @@ def response(flow: http.HTTPFlow) -> None:
                 for role in response_data.get('data', {}).get('roleList', []):
                     role['isOwn'] = True
                 # 更新响应体
+                response_data['data']['useRoleID'] = roleInfo['roleID']
+                response_data['data']['useSkinID'] = roleInfo['skinID']
                 flow.response.content = json.dumps(response_data, ensure_ascii=False).encode('utf-8')
             except json.JSONDecodeError:
                 pass  # 忽略无法解析的响应体
@@ -93,10 +115,14 @@ def response(flow: http.HTTPFlow) -> None:
         if flow.response.content:
             try:
                 response_data = json.loads(flow.response.content)
+                logger.debug(f"Request data: {response_data}")
+                logger.debug(f"Type of request data: {type(response_data)}")
                 # 修改响应数据中的 roleId
-                for player in response_data.get('data', {}).get('players', []):
-                    if player.get('userID') == userInfo['userID']:
+                for player in response_data['data']['players']:
+                    if player['userID'] == userInfo['userID']:
+                        logger.debug(f"Found player data: {player}")
                         player['roleId'] = roleInfo['roleID']
+                        player['skinID'] = roleInfo['skinID']
                 # 更新响应体
                 flow.response.content = json.dumps(response_data, ensure_ascii=False).encode('utf-8')
             except json.JSONDecodeError:
@@ -107,6 +133,7 @@ def response(flow: http.HTTPFlow) -> None:
             try:
                 response_data = json.loads(flow.response.content)
                 response_data['data']['roleID'] = roleInfo['roleID']
+                response_data['data']['skinID'] = roleInfo['skinID']
                 # 更新响应体
                 flow.response.content = json.dumps(response_data, ensure_ascii=False).encode('utf-8')
             except json.JSONDecodeError:
@@ -117,6 +144,7 @@ def response(flow: http.HTTPFlow) -> None:
             try:
                 response_data = json.loads(flow.response.content)
                 response_data['data']['roleID'] = roleInfo['roleID']
+                response_data['data']['skinID'] = roleInfo['skinID']
                 # 更新响应体
                 flow.response.content = json.dumps(response_data, ensure_ascii=False).encode('utf-8')
             except json.JSONDecodeError:
