@@ -1,0 +1,3 @@
+mitmproxy>=10
+requests
+loguru
