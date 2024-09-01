@@ -51,6 +51,16 @@ addons = [
 ]
 def response(flow: http.HTTPFlow) -> None:
     global userInfo, roleInfo
+    if "/users/emailLogin" in flow.request.path:
+        if flow.response.content:
+            try:
+                response_data = json.loads(flow.response.content)
+                userInfo['userID'] = response_data['data']['user']['id']
+                userInfo['nickname'] = response_data['data']['user']['nickname']
+                logger.info(f"User {userInfo['nickname']} logged in")
+                logger.info(f"User ID: {userInfo['userID']}")
+            except json.JSONDecodeError:
+                pass
     if "/users/tokenLogin" in flow.request.path:
         if flow.response.content:
             try:
@@ -63,7 +73,6 @@ def response(flow: http.HTTPFlow) -> None:
                 logger.info(f"User ID: {userInfo['userID']}")
             except json.JSONDecodeError:
                 pass
-
     # 如果 URL 的后半部分包含 /users/getSkinInfo
     if "/users/getSkinInfo" in flow.request.path:
         # 修改响应体
