@@ -14,7 +14,7 @@
 
 # 使用方法
 
-通过git clone或其他方式下载源码到本地，在Python>=3.10环境下，打开命令行，在当前目录运行``mitmproxy -p 12345 main.py --set block_global=false -s --set block_private=false --ssl-insecure``启动程序（首次运行需``pip install -r requirements.txt``安装依赖）
+通过git clone或其他方式下载源码到本地，在Python>=3.10环境下，打开命令行，在当前目录运行``mitmproxy -p 12345 main.py --set block_global=false --set block_private=false --ssl-insecure``启动程序（首次运行需``pip install -r requirements.txt``安装依赖）
 
 **使用前，请务必关闭Clash、V2ray等代理服务**
 
